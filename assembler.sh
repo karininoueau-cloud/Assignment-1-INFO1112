@@ -63,8 +63,7 @@ mapfile -t lines < "$infile"
 # -t strips the trailing newline character from each line
 # lines[0] = line 1, lines[1] = line 2, etc. (Bash arrays are 0-indexed)
 
-n_values="${lines[0]}"
-# grab line 1 of the file — this tells us how many static data bytes follow
+n_values="${lines[0]}" # grab line 1 of the file — this tells us how many static data bytes follow
 
 if ! [[ "$n_values" =~ ^[0-9]+$ ]]; then
     # =~ does a regex match; ^[0-9]+$ means "the whole string is one or more digits"
@@ -79,11 +78,9 @@ if [ "$n_values" -ne 0 ] && [ "$n_values" -ne 2 ]; then
     exit 1
 fi
 
-dataArray=()
-# this empty array will hold every output byte (as hex strings), built up before writing anything to disk
+dataArray=() # this empty array will hold every output byte (as hex strings), built up before writing anything to disk
 
-program_type=""
-# will hold either "QUIT" or "ADD/SUB" so we can print the right header message later
+program_type="" # will hold either "QUIT" or "ADD/SUB" so we can print the right header message later
 
 
 # ------------ CASE A: n_values IS 0 (QUIT-only program) ----------------
@@ -98,17 +95,12 @@ if [ "$n_values" -eq 0 ]; then
         exit 1
     fi
 
-    opbin=$(dec_to_bin 8 6)
-    # QUIT's opcode is 8, represented in 6 bits (001000)
-    regbin=$(dec_to_bin 0 2)
-    # QUIT's register field is always 0, in 2 bits (00)
-    membin=$(dec_to_bin 0 8)
-    # QUIT's memory field is always 0, in 8 bits (00000000)
+    opbin=$(dec_to_bin 8 6) # QUIT's opcode is 8, represented in 6 bits (001000)
+    regbin=$(dec_to_bin 0 2) # QUIT's register field is always 0, in 2 bits (00)
+    membin=$(dec_to_bin 0 8) # QUIT's memory field is always 0, in 8 bits (00000000)
 
-    dataArray[0]=$(bin_to_hex "${opbin}${regbin}")
-    # concatenate opcode+register bits (6+2=8 bits = 1 byte) and convert to hex -> "20"
-    dataArray[1]=$(bin_to_hex "$membin")
-    # the memory byte on its own (8 bits = 1 byte) -> "00"
+    dataArray[0]=$(bin_to_hex "${opbin}${regbin}") # concatenate opcode+register bits (6+2=8 bits = 1 byte) and convert to hex -> "20"
+    dataArray[1]=$(bin_to_hex "$membin") # the memory byte on its own (8 bits = 1 byte) -> "00"
 
 
 # -------- CASE B: n_values IS 2 (static data + instructions) --------------
@@ -140,12 +132,9 @@ else
 
     # ------------------- INSTRUCTION LOOP --------------------
 
-    idx=2
-    # index into dataArray for the NEXT byte we write; 0 and 1 are already used by static data
-    count=0
-    # counts how many instructions we've processed (max 100 allowed)
-    next_line=3
-    # index into "lines" array of the next instruction line to read (line 4 of the file = lines[3])
+    idx=2 # index into dataArray for the NEXT byte we write; 0 and 1 are already used by static data
+    count=0 # counts how many instructions we've processed (max 100)
+    next_line=3 # index into "lines" array of the next instruction line to read 
 
     while [ "$next_line" -lt "${#lines[@]}" ]; do
         # ${#lines[@]} = total number of lines in the array; loop until we run out of lines
@@ -203,25 +192,17 @@ else
             exit 1
         fi
 
-        opbin=$(dec_to_bin "$opcode" 6)
-        # opcode as 6-bit binary
-        regbin=$(dec_to_bin "$reg" 2)
-        # register as 2-bit binary
-        membin=$(dec_to_bin "$mem" 8)
-        # memory address as 8-bit binary
+        opbin=$(dec_to_bin "$opcode" 6) # opcode as 6-bit binary
+        regbin=$(dec_to_bin "$reg" 2) # register as 2-bit binary
+        membin=$(dec_to_bin "$mem" 8) # memory address as 8-bit binary
 
-        dataArray[$idx]=$(bin_to_hex "${opbin}${regbin}")
-        # byte 1: opcode (6 bits) + register (2 bits) = 8 bits, converted to hex
-        idx=$((idx+1))
-        # move to the next free slot in dataArray
+        dataArray[$idx]=$(bin_to_hex "${opbin}${regbin}") # byte 1: opcode (6 bits) + register (2 bits) = 8 bits, converted to hex
+        idx=$((idx+1) # move to the next free slot in dataArray
 
-        dataArray[$idx]=$(bin_to_hex "$membin")
-        # byte 2: the memory address on its own (8 bits), converted to hex
-        idx=$((idx+1))
-        # move to the next free slot again
+        dataArray[$idx]=$(bin_to_hex "$membin") # byte 2: the memory address on its own (8 bits), converted to hex
+        idx=$((idx+1)) # move to the next free slot again
 
-        count=$((count+1))
-        # one more instruction has been processed
+        count=$((count+1)) # one more instruction has been processed
 
         if [ "$ins" = "QUIT" ]; then
             # if this instruction was QUIT, stop reading further lines
@@ -239,16 +220,13 @@ fi
 
 # --------------- WRITE THE OUTPUT .bin FILE ----------------------
 
-outfile="${infile%.vsc}.bin"
-# ${infile%.vsc} strips ".vsc" off the end of the filename; then we append ".bin"
+outfile="${infile%.vsc}.bin" # ${infile%.vsc} strips ".vsc" off the end of the filename; then we append ".bin"
 
-rm -f "$outfile"
-# delete any old .bin file with this name first, so we start writing fresh (-f = don't error if it doesn't exist)
+rm -f "$outfile" # delete any old .bin file with this name first, so we start writing fresh (-f = don't error if it doesn't exist)
 
 for byte in "${dataArray[@]}"; do
     # "${dataArray[@]}" expands to every element in the array, in order
-    printf "\\x${byte}" >> "$outfile"
-    # \xHH tells printf to write the literal byte with that hex value; >> appends to the file
+    printf "\\x${byte}" >> "$outfile" # \xHH tells printf to write the literal byte with that hex value; >> appends to the file
 done
 
 
