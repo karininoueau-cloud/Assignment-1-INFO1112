@@ -58,7 +58,10 @@ bin_to_hex() {
 }
 # ----------------- READ THE FILE INTO AN ARRAY -----------------------
 
-mapfile -t lines < "$infile"
+lines=()
+while IFS= read -r line || [ -n "$line" ]; do
+    lines+=("$line")
+done < "$infile"
 # mapfile -t reads the whole file into an array called "lines"
 # -t strips the trailing newline character from each line
 # lines[0] = line 1, lines[1] = line 2, etc. (Bash arrays are 0-indexed)
