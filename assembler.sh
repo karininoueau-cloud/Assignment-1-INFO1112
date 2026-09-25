@@ -200,7 +200,7 @@ else
         membin=$(dec_to_bin "$mem" 8) # memory address as 8-bit binary
 
         dataArray[$idx]=$(bin_to_hex "${opbin}${regbin}") # byte 1: opcode (6 bits) + register (2 bits) = 8 bits, converted to hex
-        idx=$((idx+1) # move to the next free slot in dataArray
+        idx=$((idx+1)) # move to the next free slot in dataArray
 
         dataArray[$idx]=$(bin_to_hex "$membin") # byte 2: the memory address on its own (8 bits), converted to hex
         idx=$((idx+1)) # move to the next free slot again
